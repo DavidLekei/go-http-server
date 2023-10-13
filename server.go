@@ -8,19 +8,23 @@
 		Needs to be able to handle the HTML template files loading in Javascript files as well... not sure how to do that at the moment
 */
 
-package server
+package main
 
 import(
 	"fmt"
 	"net"
 	"errors"
 	"strings"
+	url "github.com/DavidLekei/go-http-server/url"
 )
 
 var DEFAULT_PORT = 3456
 var MAX_BUFFER_SIZE = 4096
 
-var routeTable map[string]*Route
+// var routeTable map[string]*Route
+
+var getRouteTable map[string]*Route
+var postRouteTable map[string]*Route
 
 //TODO: in the future, add support for parsing RESTful type paths such as /user/<userId>/...
 // func parsePath(path string, req *Request)(*Route){
@@ -51,6 +55,8 @@ func findRoute(req *Request)(*Route, error){
 	// /posts/security/some-title
 	// /users/32?displayAs=table
 
+	var routeTable map[string]*Route
+
 	url := strings.Split(req.Target, "?")
 
 	path := url[0]
@@ -59,10 +65,15 @@ func findRoute(req *Request)(*Route, error){
 		req.AddParams(url[1])
 	}
 
-	//var route *Route = parsePath(path, req)
+	if(req.Method == "GET"){
+		fmt.Println("Checking GET table for: ", path)
+		routeTable = getRouteTable
+		printRouteTable(routeTable)
+	}else if(req.Method == "POST"){
+		routeTable = postRouteTable
+	}
 
-	key := path + req.Method
-	var route *Route = routeTable[key]
+	var route *Route = routeTable[path]
 
 
 	if(route == nil){
@@ -81,7 +92,7 @@ func handleConnection(conn net.Conn){
 	if(readError != nil){
 		fmt.Println("handleConnection() - ERROR")
 	}else{
-		req := CreateFromBytes(inBuffer, bytesRead)
+		req := CreateRequestFromBytes(inBuffer, bytesRead)
 
 		route, routeError := findRoute(req)
 		if(routeError != nil){
@@ -140,22 +151,32 @@ func checkPathForVariable(path string)(variable string, newPath string){
 	return strings.Split(pathSplit[1], "/")[0], _newPath
 }
 
-func AddRoute(path string, methods []string, callback func(req *Request)(*Response)){
-	if(routeTable == nil){
-		createRouteTable()
-	}
+func AddRoute(path string, routeTable map[string]*Route, callback func(req *Request)(*Response)){
 
-	for _, m := range methods{
+	variable, path := checkPathForVariable(path)
 
-		variable, path := checkPathForVariable(path)
-
-		fmt.Println("Adding New Route with Path: ", path, " - Variable: " , variable)
+	fmt.Println("Adding New Route with Path: ", path, " - Variable: " , variable)
 		
-		//TODO: I do not like this as a key, but I'm not exactly sure what to do better at the moment. This should DEFINITELY be changed in the future.
-		key := path + m
-		route := &Route{path: path, method: m, callback: callback, variable: variable}
-		routeTable[key] = route
+	//TODO: I do not like this as a key, but I'm not exactly sure what to do better at the moment. This should DEFINITELY be changed in the future.
+	key := path
+	route := &Route{path: path, callback: callback, variable: variable}
+	routeTable[key] = route
+}
+
+func Get(path string, callback func(req *Request)(*Response)){
+	if(getRouteTable == nil){
+		getRouteTable = make(map[string]*Route)
 	}
+
+	AddRoute(path, getRouteTable, callback)
+}
+
+func Post(path string, callback func(req *Request)(*Response)){
+	if(postRouteTable == nil){
+		postRouteTable = make(map[string]*Route)
+	}
+
+	AddRoute(path, postRouteTable, callback)
 }
 
 
@@ -167,6 +188,9 @@ func AddRoute(path string, methods []string, callback func(req *Request)(*Respon
 //Etc
 func Run(port ...int){
 	fmt.Println("Starting HTTP Server...")
+
+	urlParser := new(url.RESTUrlParser)
+	fmt.Println(urlParser)
 
 
 	if(port == nil){
@@ -184,11 +208,18 @@ func Run(port ...int){
 
 */
 
-func createRouteTable(){
-	routeTable = make(map[string]*Route)
+func splitIntoBST(path string) *url.BSTNode {
+	pieces := strings.Split(path, "/")
+
+	for _, piece := range pieces{
+		fmt.Println("piece: ", piece)
+	}
+
+	return url.BSTCreate("")
 }
 
-func printRouteTable(){
+
+func printRouteTable(routeTable map[string]*Route){
 	var keys []string
 
 	for k := range routeTable{
@@ -196,6 +227,6 @@ func printRouteTable(){
 	}
 
 	for _, r := range keys{
-		fmt.Println("Route: ", routeTable[r].path, " - ", routeTable[r].method, " - ", routeTable[r].callback)
+		fmt.Println("Route: ", routeTable[r].path, " - ", routeTable[r].callback)
 	}
 }

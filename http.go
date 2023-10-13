@@ -1,4 +1,4 @@
-package server
+package main
 
 import(
 	"fmt"
@@ -42,7 +42,7 @@ type HttpRequest interface{
 	Print()
 }
 
-func CreateFromBytes(bytes []byte, len int)(*Request){
+func CreateRequestFromBytes(bytes []byte, len int)(*Request){
 	message := string(bytes[:len])
 
 	lines := strings.Split(message, "\n")
@@ -84,6 +84,15 @@ func Respond(statusCode int, body string)(*Response){
 	responseHeaders["Content-Type"] = "text/html"
 	responseHeaders["Content-Length"] = strconv.Itoa(len(body))
 	responseHeaders["Date"] = "TODO"
+
+	return encodeResponse(statusCode, body, responseHeaders)
+}
+
+func JSON(statusCode int, body string)(*Response){
+	responseHeaders := make(map[string]string)
+
+	responseHeaders["Content-Type"] = "application/json"
+	responseHeaders["Content-Length"] = strconv.Itoa(len(body))
 
 	return encodeResponse(statusCode, body, responseHeaders)
 }

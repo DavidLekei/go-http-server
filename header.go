@@ -1,4 +1,4 @@
-package server
+package main
 
 func (header Header) SetKey(key string){
 	header.Key = key

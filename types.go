@@ -1,4 +1,4 @@
-package server
+package main
 
 type Header struct{
 	Key string
@@ -14,7 +14,6 @@ type KVPair interface{
 
 type Route struct{
 	path string
-	method string
 	callback func(req *Request)(*Response)
 	variable string
 }
