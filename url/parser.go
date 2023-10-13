@@ -14,7 +14,7 @@ type RESTUrlParser struct {
 
 func (parser *RESTUrlParser) Create() URLParser {
 	return &RESTUrlParser{
-		pathTree: BSTCreate("test data"),
+		pathTree: BSTCreate("test data", false),
 		url: URLCreate("TODO"),
 	}
 }

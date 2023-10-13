@@ -13,7 +13,6 @@ package main
 import(
 	"fmt"
 	"net"
-	"errors"
 	"strings"
 	url "github.com/DavidLekei/go-http-server/url"
 )
@@ -26,62 +25,6 @@ var MAX_BUFFER_SIZE = 4096
 var getRouteTable map[string]*Route
 var postRouteTable map[string]*Route
 
-//TODO: in the future, add support for parsing RESTful type paths such as /user/<userId>/...
-// func parsePath(path string, req *Request)(*Route){
-// 	var key string
-
-// 	pathOptions := strings.Split(path, "/")
-// 	tryPath := ""
-
-// 	for i, p := range pathOptions{
-// 		if(i == 0){
-// 			continue
-// 		}
-
-// 		tryPath = tryPath + "/" + p
-
-// 		key = tryPath + req.Method
-// 		if(routeTable[key] != nil){
-// 			return routeTable[key]
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-func findRoute(req *Request)(*Route, error){
-
-	// /users/32
-	// /posts/security/some-title
-	// /users/32?displayAs=table
-
-	var routeTable map[string]*Route
-
-	url := strings.Split(req.Target, "?")
-
-	path := url[0]
-	if(len(url) == 2){
-		req.Target = path
-		req.AddParams(url[1])
-	}
-
-	if(req.Method == "GET"){
-		fmt.Println("Checking GET table for: ", path)
-		routeTable = getRouteTable
-		printRouteTable(routeTable)
-	}else if(req.Method == "POST"){
-		routeTable = postRouteTable
-	}
-
-	var route *Route = routeTable[path]
-
-
-	if(route == nil){
-		return nil, errors.New("Route - " + path + " - not found")
-	}else{
-		return route, nil
-	}
-}
 
 func handleConnection(conn net.Conn){
 	var inBuffer []byte = make([]byte, MAX_BUFFER_SIZE)
@@ -94,7 +37,7 @@ func handleConnection(conn net.Conn){
 	}else{
 		req := CreateRequestFromBytes(inBuffer, bytesRead)
 
-		route, routeError := findRoute(req)
+		route, routeError := FindRoute(req)
 		if(routeError != nil){
 			fmt.Println("ERROR: ", routeError)
 			//Check if there's a default "error" page/route defined, and if so, return that
@@ -137,7 +80,7 @@ func checkPathForVariable(path string)(variable string, newPath string){
 	if(strings.Contains(path, ":") == false){
 		return "", path
 	}
-	
+
 	var _newPath string
 
 	pathSplit := strings.Split(path, ":")
@@ -215,7 +158,7 @@ func splitIntoBST(path string) *url.BSTNode {
 		fmt.Println("piece: ", piece)
 	}
 
-	return url.BSTCreate("")
+	return url.BSTCreate("", false)
 }
 
 

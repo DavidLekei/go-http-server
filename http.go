@@ -18,7 +18,7 @@ type Request struct{
 	Headers map[string]string
 	Body string
 	headerCount int
-	Params map[string]string
+	Params map[string]any
 }
 
 type Response struct{
@@ -55,7 +55,7 @@ func CreateRequestFromBytes(bytes []byte, len int)(*Request){
 	r.Version = startLine[2]
 	r.Headers = make(map[string]string)
 	r.headerCount = 0
-	r.Params = make(map[string]string)
+	r.Params = make(map[string]any)
 
 	lineCount := 1
 	line := lines[lineCount]

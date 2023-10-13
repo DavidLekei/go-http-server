@@ -11,9 +11,3 @@ type KVPair interface{
 	GetKey()(key string)
 	GetValue()(value string)
 }
-
-type Route struct{
-	path string
-	callback func(req *Request)(*Response)
-	variable string
-}
